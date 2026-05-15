@@ -15,6 +15,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+/* Close sidebar on mobile to reveal the map (used after tool selection) */
+function closeSidebarOnMobile() {
+  if (isMobile()) {
+    document.getElementById('sidebar')?.classList.add('collapsed');
+  }
+}
+
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelector(`.tab[data-tab="${tab}"]`)?.classList.add('active');

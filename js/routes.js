@@ -32,6 +32,7 @@ const Routes = (() => {
     document.getElementById('route-name').value = currentRoute.name;
     updateWaypointList();
     setTool('waypoint');
+    closeSidebarOnMobile();
     showToast('Cliquez sur la carte pour ajouter des points de passage', 'info');
   }
 

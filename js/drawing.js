@@ -38,6 +38,7 @@ const Drawing = (() => {
     if (mode) {
       const btn = document.getElementById(`draw-${mode}`);
       if (btn) btn.classList.add('draw-active');
+      closeSidebarOnMobile();
     }
     const map = MapEngine.getMap();
     if (map) map.getCanvas().style.cursor = mode ? 'crosshair' : '';
