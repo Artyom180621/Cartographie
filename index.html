@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Antigravity - Application de cartographie avancée avec imagerie satellite non censurée">
+  <title>Antigravity — Cartographie</title>
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+  <!-- ===== Sidebar ===== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">A</div>
+      <div>
+        <div class="sidebar-title">Antigravity</div>
+        <div class="sidebar-subtitle">Cartographie Avancée</div>
+      </div>
+      <button class="btn-ghost" style="margin-left:auto" onclick="toggleSidebar()" title="Réduire">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="routes" onclick="switchTab('routes')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M3 17l6-6 4 4 8-8"/></svg>
+        Itinéraires
+      </button>
+      <button class="tab" data-tab="draw" onclick="switchTab('draw')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        Dessin
+      </button>
+      <button class="tab" data-tab="layers" onclick="switchTab('layers')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/></svg>
+        Couches
+      </button>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="sidebar-content">
+      <!-- Routes Tab -->
+      <div class="tab-panel" id="tab-routes">
+        <div style="display:flex;gap:6px;margin-bottom:12px">
+          <button class="btn btn-primary btn-sm btn-block" id="btn-new-route" onclick="createNewRoute()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nouvel Itinéraire
+          </button>
+        </div>
+        <div id="route-list"></div>
+        <div id="route-editor" style="display:none">
+          <div class="form-group">
+            <label class="form-label">Nom de l'itinéraire</label>
+            <input type="text" class="form-input" id="route-name" placeholder="Mon itinéraire">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Points de passage</label>
+            <ul class="waypoint-list" id="waypoint-list"></ul>
+            <p style="font-size:11px;color:var(--text-muted);margin-top:8px">Cliquez sur la carte pour ajouter des points</p>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:12px">
+            <button class="btn btn-secondary btn-sm" onclick="calcRoute()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/></svg>
+              Calculer trajet
+            </button>
+            <button class="btn btn-success btn-sm" onclick="saveCurrentRoute()">Sauvegarder</button>
+            <button class="btn btn-ghost btn-sm" onclick="cancelRouteEdit()">Annuler</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Draw Tab -->
+      <div class="tab-panel" id="tab-draw" style="display:none">
+        <p class="form-label" style="margin-bottom:10px">Outils de dessin</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px">
+          <button class="btn btn-secondary btn-sm" onclick="setDrawMode('point')" id="draw-point">📍 Point</button>
+          <button class="btn btn-secondary btn-sm" onclick="setDrawMode('line')" id="draw-line">📏 Ligne</button>
+          <button class="btn btn-secondary btn-sm" onclick="setDrawMode('circle')" id="draw-circle">⭕ Cercle</button>
+          <button class="btn btn-secondary btn-sm" onclick="setDrawMode('polygon')" id="draw-polygon">🔷 Polygone</button>
+        </div>
+        <button class="btn btn-ghost btn-sm btn-block" onclick="setDrawMode(null)" style="margin-bottom:16px">✖ Désélectionner outil</button>
+        <div class="section">
+          <div class="section-header"><span class="section-title">Éléments dessinés</span></div>
+          <div id="drawings-list"><p style="font-size:12px;color:var(--text-muted)">Aucun élément dessiné</p></div>
+        </div>
+        <button class="btn btn-danger btn-sm btn-block" onclick="clearAllDrawings()" style="margin-top:8px">Supprimer tout</button>
+      </div>
+
+      <!-- Layers Tab -->
+      <div class="tab-panel" id="tab-layers" style="display:none">
+        <p class="form-label" style="margin-bottom:10px">Style de carte</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+          <div class="style-btn active" id="style-streets" onclick="setMapStyle('streets')" style="background:linear-gradient(135deg,#2d3748,#4a5568)"><span>Rues</span></div>
+          <div class="style-btn" id="style-satellite" onclick="setMapStyle('satellite')" style="background:linear-gradient(135deg,#1a3a2a,#2d5a3a)"><span>Satellite</span></div>
+          <div class="style-btn" id="style-topo" onclick="setMapStyle('topo')" style="background:linear-gradient(135deg,#3a2a1a,#5a4a3a)"><span>Topo</span></div>
+          <div class="style-btn" id="style-ign" onclick="setMapStyle('ign')" style="background:linear-gradient(135deg,#1a2a4a,#2d3a6a)"><span>Plan IGN</span></div>
+        </div>
+        <div class="section">
+          <div class="section-header"><span class="section-title">Couches superposées</span></div>
+          <div class="layer-item" onclick="toggleLayer('routes-layer')">
+            <div class="layer-toggle on" id="toggle-routes-layer"></div>
+            <span>Itinéraires</span>
+          </div>
+          <div class="layer-item" onclick="toggleLayer('drawings-layer')">
+            <div class="layer-toggle on" id="toggle-drawings-layer"></div>
+            <span>Dessins</span>
+          </div>
+          <div class="layer-item" onclick="toggleLayer('grid-layer')">
+            <div class="layer-toggle" id="toggle-grid-layer"></div>
+            <span>Grille coordonnées</span>
+          </div>
+        </div>
+
+        <!-- Offline Section -->
+        <div class="section" style="margin-top:16px">
+          <div class="section-header"><span class="section-title">Mode hors ligne</span></div>
+          <div style="padding:8px">
+            <p style="font-size:11px;color:var(--text-muted);margin-bottom:8px" id="offline-stats">0 tuiles en cache</p>
+            <div id="offline-progress" style="display:none;align-items:center;gap:8px;margin-bottom:8px"></div>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-primary btn-sm btn-block" onclick="Offline.downloadArea()">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Mettre en cache
+              </button>
+              <button class="btn btn-danger btn-sm" onclick="Offline.clearCache()" title="Vider le cache">🗑</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar Footer -->
+    <div style="padding:12px;border-top:1px solid var(--border-color)">
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-secondary btn-sm btn-block" onclick="showExportModal()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exporter
+        </button>
+        <button class="btn btn-secondary btn-sm btn-block" onclick="toggleActivity()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Activité
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Sidebar Toggle (shown when collapsed) -->
+  <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+
+  <!-- Map Container -->
+  <div class="map-container">
+    <!-- Search -->
+    <div class="search-container" id="search-container">
+      <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" class="search-box" id="search-input" placeholder="Rechercher un lieu ou coordonnées..." autocomplete="off">
+      <div class="search-results" id="search-results"></div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar" id="toolbar">
+      <button class="btn-icon" id="tool-select" title="Sélection" onclick="setTool('select')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg>
+      </button>
+      <button class="btn-icon" id="tool-waypoint" title="Ajouter waypoint" onclick="setTool('waypoint')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      </button>
+      <div class="divider"></div>
+      <button class="btn-icon" id="tool-measure" title="Mesurer distance" onclick="setTool('measure')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20h20"/><path d="M5 20V8"/><path d="M19 20V4"/><path d="M5 14h14"/></svg>
+      </button>
+      <button class="btn-icon" id="tool-locate" title="Ma position" onclick="geolocate()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
+      </button>
+    </div>
+
+    <!-- Map -->
+    <div id="map"></div>
+
+    <!-- Activity Panel -->
+    <div class="activity-panel" id="activity-panel">
+      <div class="activity-stats">
+        <div class="activity-stat">
+          <div class="activity-stat-value" id="act-distance">0.00</div>
+          <div class="activity-stat-label">km</div>
+        </div>
+        <div class="activity-stat">
+          <div class="activity-stat-value" id="act-duration">00:00</div>
+          <div class="activity-stat-label">durée</div>
+        </div>
+        <div class="activity-stat">
+          <div class="activity-stat-value" id="act-speed">0.0</div>
+          <div class="activity-stat-label">km/h</div>
+        </div>
+        <div class="activity-stat">
+          <div class="activity-stat-value" id="act-altitude">--</div>
+          <div class="activity-stat-label">alt. m</div>
+        </div>
+      </div>
+      <div class="activity-controls">
+        <button class="activity-btn-start" id="act-toggle" onclick="toggleRecording()" title="Démarrer/Arrêter">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Coordinate Display -->
+    <div class="coord-display" id="coord-display">0.0000, 0.0000 | Z: 2</div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div class="status-item"><span class="status-dot online" id="status-dot"></span><span id="status-text">En ligne</span></div>
+      <div class="status-item" id="status-tiles">Tuiles: OSM</div>
+      <div class="status-item" style="margin-left:auto" id="status-zoom">Zoom: 2</div>
+    </div>
+  </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal-overlay" id="export-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Exporter les données</h2>
+      <button class="btn-ghost" onclick="closeExportModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Format d'export</label>
+        <select class="form-input form-select" id="export-format">
+          <option value="gpx">GPX (GPS Exchange Format)</option>
+          <option value="kml">KML (Google Earth)</option>
+          <option value="geojson">GeoJSON</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contenu</label>
+        <select class="form-input form-select" id="export-content">
+          <option value="all">Tout (itinéraires + dessins)</option>
+          <option value="routes">Itinéraires uniquement</option>
+          <option value="drawings">Dessins uniquement</option>
+          <option value="activity">Dernière activité</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeExportModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="exportData()">Télécharger</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- Scripts -->
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/geo.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/offline.js"></script>
+<script src="js/styles.js"></script>
+<script src="js/layers.js"></script>
+<script src="js/map.js"></script>
+<script src="js/geocoder.js"></script>
+<script src="js/routes.js"></script>
+<script src="js/drawing.js"></script>
+<script src="js/activity.js"></script>
+<script src="js/export.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
