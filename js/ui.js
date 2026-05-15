@@ -6,6 +6,15 @@ function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('collapsed');
 }
 
+function isMobile() { return window.innerWidth <= 768; }
+
+/* Auto-collapse sidebar on mobile so map is visible */
+document.addEventListener('DOMContentLoaded', () => {
+  if (isMobile()) {
+    document.getElementById('sidebar')?.classList.add('collapsed');
+  }
+});
+
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelector(`.tab[data-tab="${tab}"]`)?.classList.add('active');

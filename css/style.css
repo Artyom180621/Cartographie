@@ -460,11 +460,117 @@ body {
 .fade-in { animation: fadeIn 0.4s ease-out; }
 .slide-up { animation: slideUp 0.4s ease-out; }
 
-/* --- Responsive --- */
+/* --- Responsive Mobile --- */
 @media (max-width: 768px) {
-  .sidebar { position: absolute; width: 100%; }
-  .sidebar.collapsed ~ .sidebar-toggle { display: flex; }
-  .toolbar { left: auto; right: 60px; transform: none; }
-  .search-container { width: 200px; }
-  .activity-panel { min-width: auto; width: calc(100% - 32px); flex-wrap: wrap; }
+  :root { --sidebar-width: 100vw; }
+
+  /* App stays full screen */
+  #app { flex-direction: column; }
+
+  /* Sidebar becomes a bottom drawer */
+  .sidebar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    width: 100vw; height: 55vh;
+    border-right: none; border-top: 1px solid var(--border-color);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    z-index: 300;
+    transform: translateY(0);
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  .sidebar.collapsed {
+    transform: translateY(100%); opacity: 0; pointer-events: none;
+  }
+
+  /* Sidebar header compact */
+  .sidebar-header { padding: 10px 16px; }
+  .sidebar-logo { width: 28px; height: 28px; font-size: 13px; }
+  .sidebar-title { font-size: 14px; }
+
+  /* Sidebar toggle — always visible on mobile */
+  .sidebar-toggle {
+    display: flex;
+    position: fixed; bottom: 16px; left: 16px;
+    z-index: 200; width: 44px; height: 44px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+  .sidebar:not(.collapsed) ~ .sidebar-toggle { display: none; }
+
+  /* Map takes full screen */
+  .map-container { width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; }
+  #map { width: 100%; height: 100%; }
+
+  /* Toolbar compact — top left, below the safe area */
+  .toolbar {
+    left: auto; right: 12px; top: calc(12px + env(safe-area-inset-top, 0px));
+    transform: none;
+    padding: 4px; gap: 2px;
+  }
+  .toolbar .btn-icon { width: 32px; height: 32px; }
+  .toolbar .divider { margin: 2px 1px; }
+
+  /* Search adapts */
+  .search-container {
+    width: calc(100vw - 220px);
+    right: auto; left: 12px;
+    top: calc(12px + env(safe-area-inset-top, 0px));
+  }
+  .search-box { padding: 8px 10px 8px 34px; font-size: 12px; }
+
+  /* Activity panel full width */
+  .activity-panel {
+    min-width: auto; width: calc(100vw - 32px);
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    padding: 12px 16px;
+    flex-wrap: wrap; gap: 12px;
+    border-radius: var(--radius-lg);
+  }
+  .activity-stats { gap: 16px; flex-wrap: wrap; justify-content: center; }
+  .activity-stat-value { font-size: 18px; }
+
+  /* Coord display repositioned */
+  .coord-display {
+    bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    font-size: 10px; padding: 3px 8px;
+  }
+
+  /* Status bar */
+  .status-bar {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    height: calc(24px + env(safe-area-inset-bottom, 0px));
+    font-size: 10px;
+  }
+
+  /* Toast notifications */
+  .toast-container {
+    top: calc(8px + env(safe-area-inset-top, 0px));
+    right: 8px; left: 8px;
+  }
+  .toast { min-width: auto; font-size: 12px; padding: 10px 12px; }
+
+  /* Style buttons in Couches tab */
+  .style-btn { width: 48px; height: 48px; }
+  .style-btn span { font-size: 8px; }
+
+  /* Tabs compact */
+  .tab { padding: 8px 4px; font-size: 11px; }
+
+  /* Buttons touch-friendly */
+  .btn-sm { padding: 8px 12px; font-size: 12px; min-height: 36px; }
+  .btn-icon { min-width: 40px; min-height: 40px; }
+
+  /* Modal full width */
+  .modal { width: 95%; max-width: none; padding: 16px; }
+}
+
+/* --- Extra small screens (iPhone SE etc.) --- */
+@media (max-width: 380px) {
+  .sidebar { height: 50vh; }
+  .search-container { width: calc(100vw - 180px); }
+  .toolbar .btn-icon { width: 28px; height: 28px; }
+  .activity-stat-value { font-size: 16px; }
+}
+
+/* --- PWA standalone mode (installed on home screen) --- */
+@media (display-mode: standalone) {
+  body { padding-top: env(safe-area-inset-top, 0px); }
 }
