@@ -40,10 +40,16 @@ const MapEngine = (() => {
   function setStyle(styleKey) {
     if (!map || !MapStyles[styleKey]) return;
     currentStyle = styleKey;
-    const saved = Layers.saveData(map);
 
+    // Data is already cached inside Layers.sourceDataCache, no need to save
     map.setStyle(MapStyles[styleKey].url);
-    map.once('style.load', () => Layers.restoreAll(map, saved));
+    map.once('style.load', () => {
+      Layers.restoreAll(map);
+      // Re-render data from modules that own their data
+      if (typeof Drawing !== 'undefined') Drawing.renderOnMap();
+      if (typeof Routes !== 'undefined' && Routes.getRoutes) Routes.renderSavedRoutesOnMap();
+      if (typeof Importer !== 'undefined') Importer.renderOnMap();
+    });
 
     document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(`style-${styleKey}`)?.classList.add('active');

@@ -17,6 +17,7 @@ function boot() {
     Geocoder.init();
     Routes.init();
     Drawing.init();
+    Importer.init();
     Activity.init();
     Offline.updateStats();
     setupMapInteractions(map);

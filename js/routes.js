@@ -207,18 +207,18 @@ const Routes = (() => {
 
   function renderSavedRoutesOnMap() {
     const map = MapEngine.getMap();
-    if (!map || !map.getSource('saved-routes')) return;
+    if (!map) return;
     const features = routes.filter(r => r.waypoints.length >= 2).map(r => ({
       type: 'Feature',
       properties: { color: r.color, name: r.name },
       geometry: r.routeGeometry || { type: 'LineString', coordinates: r.waypoints.map(w => [w.lng, w.lat]) }
     }));
-    map.getSource('saved-routes').setData({ type: 'FeatureCollection', features });
+    Layers.setSourceData(map, 'saved-routes', { type: 'FeatureCollection', features });
   }
 
   function isCurrentlyEditing() { return isEditing; }
   function getCurrentRoute() { return currentRoute; }
   function getRoutes() { return routes; }
 
-  return { init, createNew, addWaypoint, removeWaypoint, calcRoute, saveCurrentRoute, cancelEdit, deleteRoute, focusRoute, isCurrentlyEditing, getCurrentRoute, getRoutes, loadRoutes };
+  return { init, createNew, addWaypoint, removeWaypoint, calcRoute, saveCurrentRoute, cancelEdit, deleteRoute, focusRoute, isCurrentlyEditing, getCurrentRoute, getRoutes, loadRoutes, renderSavedRoutesOnMap };
 })();

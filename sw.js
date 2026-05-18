@@ -1,4 +1,4 @@
-const CACHE_NAME = 'antigravity-v2';
+const CACHE_NAME = 'antigravity-v3';
 const APP_SHELL = [
   './',
   './index.html',
@@ -13,6 +13,7 @@ const APP_SHELL = [
   './js/geocoder.js',
   './js/routes.js',
   './js/drawing.js',
+  './js/import.js',
   './js/activity.js',
   './js/export.js',
   './js/app.js',

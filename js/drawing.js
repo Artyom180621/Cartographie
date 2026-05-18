@@ -113,20 +113,22 @@ const Drawing = (() => {
     showToast('Tous les dessins supprimés', 'info');
   }
 
-  /** Push drawings to the MapLibre 'drawings' source — pure vector, no drift */
+  /** Push drawings to the MapLibre 'drawings' source via Layers cache */
   function renderOnMap() {
     const map = MapEngine.getMap();
-    if (!map || !map.getSource('drawings')) return;
+    if (!map) return;
     const features = drawings.map(d => ({
       type: 'Feature',
       properties: { color: d.color, label: d.label, id: d.id },
       geometry: d.geometry
     }));
-    map.getSource('drawings').setData({ type: 'FeatureCollection', features });
+    const data = { type: 'FeatureCollection', features };
+    Layers.setSourceData(map, 'drawings', data);
   }
 
   function renderList() {
     const c = document.getElementById('drawings-list');
+    if (!c) return;
     if (!drawings.length) { c.innerHTML = '<p style="font-size:12px;color:var(--text-muted)">Aucun élément</p>'; return; }
     c.innerHTML = drawings.map(d => `
       <div class="route-item" style="padding:8px 10px;margin-bottom:4px">
@@ -166,5 +168,5 @@ const Drawing = (() => {
   function getMode() { return currentMode; }
   function getDrawings() { return drawings; }
 
-  return { init, setMode, handleClick, handleDblClick, removeDrawing, clearAll, getMode, getDrawings, renderOnMap };
+  return { init, setMode, handleClick, handleDblClick, removeDrawing, clearAll, getMode, getDrawings, renderOnMap, addDrawing };
 })();
