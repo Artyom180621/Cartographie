@@ -24,7 +24,12 @@ const Drawing = (() => {
   }
 
   async function loadDrawings() {
-    drawings = await Storage.getAll('drawings');
+    try {
+      drawings = await Storage.getAll('drawings');
+    } catch (e) {
+      console.warn('loadDrawings failed, drawings loaded in memory:', e);
+      drawings = [];
+    }
     renderOnMap();
     renderList();
   }
@@ -92,7 +97,11 @@ const Drawing = (() => {
   async function addDrawing(d) {
     const item = { id: 'draw_' + Date.now(), ...d, color: d.color || nextColor(), createdAt: new Date().toISOString() };
     drawings.push(item);
-    await Storage.put('drawings', item);
+    try {
+      await Storage.put('drawings', item);
+    } catch (e) {
+      console.warn('Storage.put drawing failed:', e);
+    }
     renderOnMap();
     renderList();
     showToast(`${item.label} ajouté`, 'success');
@@ -100,14 +109,22 @@ const Drawing = (() => {
 
   async function removeDrawing(id) {
     drawings = drawings.filter(d => d.id !== id);
-    await Storage.remove('drawings', id);
+    try {
+      await Storage.remove('drawings', id);
+    } catch (e) {
+      console.warn('Storage.remove drawing failed:', e);
+    }
     renderOnMap();
     renderList();
   }
 
   async function clearAll() {
     drawings = [];
-    await Storage.clear('drawings');
+    try {
+      await Storage.clear('drawings');
+    } catch (e) {
+      console.warn('Storage.clear drawings failed:', e);
+    }
     renderOnMap();
     renderList();
     showToast('Tous les dessins supprimés', 'info');

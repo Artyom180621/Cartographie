@@ -47,14 +47,36 @@ const BASE_STYLE = {
   name: 'Cartographe',
   glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
   sources: {
-    'basemap': {
+    'basemap-streets': {
       type: 'raster',
       tiles: MapStyles.streets.tiles,
       tileSize: MapStyles.streets.tileSize,
       maxzoom: MapStyles.streets.maxzoom
+    },
+    'basemap-satellite': {
+      type: 'raster',
+      tiles: MapStyles.satellite.tiles,
+      tileSize: MapStyles.satellite.tileSize,
+      maxzoom: MapStyles.satellite.maxzoom
+    },
+    'basemap-topo': {
+      type: 'raster',
+      tiles: MapStyles.topo.tiles,
+      tileSize: MapStyles.topo.tileSize,
+      maxzoom: MapStyles.topo.maxzoom
+    },
+    'basemap-ign': {
+      type: 'raster',
+      tiles: MapStyles.ign.tiles,
+      tileSize: MapStyles.ign.tileSize,
+      maxzoom: MapStyles.ign.maxzoom
     }
   },
   layers: [
-    { id: 'basemap-layer', type: 'raster', source: 'basemap' }
+    { id: 'basemap-streets-layer', type: 'raster', source: 'basemap-streets', layout: { visibility: 'visible' } },
+    { id: 'basemap-satellite-layer', type: 'raster', source: 'basemap-satellite', layout: { visibility: 'none' } },
+    { id: 'basemap-topo-layer', type: 'raster', source: 'basemap-topo', layout: { visibility: 'none' } },
+    { id: 'basemap-ign-layer', type: 'raster', source: 'basemap-ign', layout: { visibility: 'none' } }
   ]
 };
+

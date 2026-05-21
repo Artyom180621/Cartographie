@@ -16,7 +16,23 @@
   <title>Cartographe</title>
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
   <link rel="stylesheet" href="css/style.css">
-  <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
+  <script>
+    // Disable offline mode and unregister any service workers, clearing caches
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        for (const registration of registrations) {
+          registration.unregister().then(success => {
+            if (success) console.log('ServiceWorker unregistered');
+          });
+        }
+      });
+    }
+    if ('caches' in window) {
+      caches.keys().then(names => {
+        for (const name of names) caches.delete(name);
+      });
+    }
+  </script>
 </head>
 <body>
 <div id="app">

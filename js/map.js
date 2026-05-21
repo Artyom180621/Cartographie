@@ -47,29 +47,17 @@ const MapEngine = (() => {
   function setStyle(styleKey) {
     if (!map || !MapStyles[styleKey]) return;
     currentStyle = styleKey;
-    const def = MapStyles[styleKey];
 
-    // Juste changer les tuiles du fond — les overlays ne bougent pas
-    const src = map.getSource('basemap');
-    if (src) {
-      // MapLibre ne permet pas de changer les tiles directement sur un source existant.
-      // On doit supprimer et recréer la source basemap + son layer.
-      if (map.getLayer('basemap-layer')) map.removeLayer('basemap-layer');
-      map.removeSource('basemap');
-
-      map.addSource('basemap', {
-        type: 'raster',
-        tiles: def.tiles,
-        tileSize: def.tileSize || 256,
-        maxzoom: def.maxzoom || 19
-      });
-
-      // Ajouter le layer basemap SOUS tous les overlays
-      const firstOverlay = Layers.getFirstLayerId();
-      if (firstOverlay && map.getLayer(firstOverlay)) {
-        map.addLayer({ id: 'basemap-layer', type: 'raster', source: 'basemap' }, firstOverlay);
-      } else {
-        map.addLayer({ id: 'basemap-layer', type: 'raster', source: 'basemap' });
+    // Toggle visibility of the basemap layers
+    for (const key of Object.keys(MapStyles)) {
+      const layerId = `basemap-${key}-layer`;
+      const isCurrent = key === styleKey;
+      try {
+        if (map.getLayer(layerId)) {
+          map.setLayoutProperty(layerId, 'visibility', isCurrent ? 'visible' : 'none');
+        }
+      } catch (e) {
+        console.warn(`Failed to set visibility for ${layerId}:`, e);
       }
     }
 
@@ -77,7 +65,7 @@ const MapEngine = (() => {
     document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(`style-${styleKey}`)?.classList.add('active');
     const el = document.getElementById('status-tiles');
-    if (el) el.textContent = `Tuiles: ${def.label}`;
+    if (el) el.textContent = `Tuiles: ${MapStyles[styleKey].label}`;
   }
 
   function getMap() { return map; }

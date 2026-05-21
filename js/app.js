@@ -12,13 +12,13 @@ document.addEventListener('DOMContentLoaded', boot);
 function boot() {
   const map = MapEngine.init();
   document.addEventListener('map-ready', () => {
-    Geocoder.init();
-    Routes.init();
-    Drawing.init();
-    Importer.init();
-    Activity.init();
-    setupMapInteractions(map);
-    setupNetworkStatus();
+    try { Geocoder.init(); } catch (e) { console.error('Geocoder init failed:', e); }
+    try { Routes.init(); } catch (e) { console.error('Routes init failed:', e); }
+    try { Drawing.init(); } catch (e) { console.error('Drawing init failed:', e); }
+    try { Importer.init(); } catch (e) { console.error('Importer init failed:', e); }
+    try { Activity.init(); } catch (e) { console.error('Activity init failed:', e); }
+    try { setupMapInteractions(map); } catch (e) { console.error('Map interactions setup failed:', e); }
+    try { setupNetworkStatus(); } catch (e) { console.error('Network status setup failed:', e); }
     console.log('%c🗺 Cartographe Loaded', 'color:#6382ff;font-size:16px;font-weight:bold');
   });
 }
