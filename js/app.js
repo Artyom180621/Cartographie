@@ -64,8 +64,8 @@ function addMeasurePoint(lngLat) {
 function updateMeasureLine() {
   const map = MapEngine.getMap();
   if (!map) return;
-  map.getSource('measure-line')?.setData({ type: 'Feature', geometry: { type: 'LineString', coordinates: measurePoints } });
-  map.getSource('measure-points')?.setData({ type: 'FeatureCollection', features: measurePoints.map(c => ({ type: 'Feature', geometry: { type: 'Point', coordinates: c } })) });
+  Layers.setSourceData(map, 'measure-line', { type: 'Feature', geometry: { type: 'LineString', coordinates: measurePoints } });
+  Layers.setSourceData(map, 'measure-points', { type: 'FeatureCollection', features: measurePoints.map(c => ({ type: 'Feature', geometry: { type: 'Point', coordinates: c } })) });
 }
 
 function calcTotalMeasure() {
@@ -85,8 +85,8 @@ function clearMeasure() {
   measureMarkers = [];
   const map = MapEngine.getMap();
   if (map) {
-    map.getSource('measure-line')?.setData({ type: 'FeatureCollection', features: [] });
-    map.getSource('measure-points')?.setData({ type: 'FeatureCollection', features: [] });
+    Layers.setSourceData(map, 'measure-line', { type: 'FeatureCollection', features: [] });
+    Layers.setSourceData(map, 'measure-points', { type: 'FeatureCollection', features: [] });
   }
 }
 

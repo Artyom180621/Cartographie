@@ -89,13 +89,13 @@ const Routes = (() => {
     if (!map || !currentRoute) return;
     const coords = currentRoute.waypoints.map(w => [w.lng, w.lat]);
 
-    map.getSource('route-line')?.setData({
+    Layers.setSourceData(map, 'route-line', {
       type: 'Feature', geometry: { type: 'LineString', coordinates: coords }
     });
-    map.getSource('route-line-border')?.setData({
+    Layers.setSourceData(map, 'route-line-border', {
       type: 'Feature', geometry: { type: 'LineString', coordinates: coords }
     });
-    map.getSource('route-points')?.setData({
+    Layers.setSourceData(map, 'route-points', {
       type: 'FeatureCollection',
       features: coords.map(c => ({ type: 'Feature', geometry: { type: 'Point', coordinates: c } }))
     });
@@ -118,9 +118,8 @@ const Routes = (() => {
         currentRoute.distance = data.routes[0].distance;
         currentRoute.duration = data.routes[0].duration;
 
-        const map = MapEngine.getMap();
-        map.getSource('route-line')?.setData({ type: 'Feature', geometry: geom });
-        map.getSource('route-line-border')?.setData({ type: 'Feature', geometry: geom });
+        Layers.setSourceData(map, 'route-line', { type: 'Feature', geometry: geom });
+        Layers.setSourceData(map, 'route-line-border', { type: 'Feature', geometry: geom });
 
         const dist = (data.routes[0].distance / 1000).toFixed(1);
         const dur = Math.round(data.routes[0].duration / 60);
@@ -155,9 +154,9 @@ const Routes = (() => {
     document.getElementById('route-editor').style.display = 'none';
     const map = MapEngine.getMap();
     if (map) {
-      map.getSource('route-line')?.setData({ type: 'FeatureCollection', features: [] });
-      map.getSource('route-line-border')?.setData({ type: 'FeatureCollection', features: [] });
-      map.getSource('route-points')?.setData({ type: 'FeatureCollection', features: [] });
+      Layers.setSourceData(map, 'route-line', { type: 'FeatureCollection', features: [] });
+      Layers.setSourceData(map, 'route-line-border', { type: 'FeatureCollection', features: [] });
+      Layers.setSourceData(map, 'route-points', { type: 'FeatureCollection', features: [] });
     }
     setTool('select');
   }
