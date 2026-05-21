@@ -1,4 +1,4 @@
-const CACHE_NAME = 'antigravity-v3';
+const CACHE_NAME = 'cartographe-v1';
 const APP_SHELL = [
   './',
   './index.html',
@@ -6,7 +6,6 @@ const APP_SHELL = [
   './js/storage.js',
   './js/geo.js',
   './js/ui.js',
-  './js/offline.js',
   './js/styles.js',
   './js/layers.js',
   './js/map.js',

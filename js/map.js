@@ -1,9 +1,12 @@
 /* ============================================
    Map - MapLibre GL init & style switching
+   Uses a PERSISTENT style.load listener so
+   layers survive unlimited style switches.
    ============================================ */
 const MapEngine = (() => {
   let map = null;
   let currentStyle = 'streets';
+  let styleReady = false;
 
   function init() {
     map = new maplibregl.Map({
@@ -29,8 +32,21 @@ const MapEngine = (() => {
       document.getElementById('status-zoom').textContent = `Zoom: ${Math.round(map.getZoom() * 10) / 10}`;
     });
 
-    map.on('load', () => {
-      Layers.addAll(map);
+    /* PERSISTENT listener — fires on EVERY style load (initial + switches) */
+    map.on('style.load', () => {
+      styleReady = true;
+      // Use setTimeout(0) to let MapLibre finalize the style internally
+      setTimeout(() => {
+        Layers.addAll(map);
+        // Re-push module data
+        if (typeof Drawing !== 'undefined' && Drawing.renderOnMap) Drawing.renderOnMap();
+        if (typeof Routes !== 'undefined' && Routes.renderSavedRoutesOnMap) Routes.renderSavedRoutesOnMap();
+        if (typeof Importer !== 'undefined' && Importer.renderOnMap) Importer.renderOnMap();
+      }, 0);
+    });
+
+    /* First load: emit map-ready for app.js boot */
+    map.once('load', () => {
       document.dispatchEvent(new Event('map-ready'));
     });
 
@@ -40,16 +56,10 @@ const MapEngine = (() => {
   function setStyle(styleKey) {
     if (!map || !MapStyles[styleKey]) return;
     currentStyle = styleKey;
+    styleReady = false;
 
-    // Data is already cached inside Layers.sourceDataCache, no need to save
+    // setStyle destroys all sources/layers — the persistent style.load listener will restore them
     map.setStyle(MapStyles[styleKey].url);
-    map.once('style.load', () => {
-      Layers.restoreAll(map);
-      // Re-render data from modules that own their data
-      if (typeof Drawing !== 'undefined') Drawing.renderOnMap();
-      if (typeof Routes !== 'undefined' && Routes.getRoutes) Routes.renderSavedRoutesOnMap();
-      if (typeof Importer !== 'undefined') Importer.renderOnMap();
-    });
 
     document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(`style-${styleKey}`)?.classList.add('active');
@@ -58,6 +68,7 @@ const MapEngine = (() => {
 
   function getMap() { return map; }
   function getCurrentStyle() { return currentStyle; }
+  function isReady() { return styleReady; }
 
-  return { init, setStyle, getMap, getCurrentStyle };
+  return { init, setStyle, getMap, getCurrentStyle, isReady };
 })();

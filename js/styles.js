@@ -1,5 +1,7 @@
 /* ============================================
    Styles - Map tile source definitions
+   All raster styles include glyphs + sprite
+   so MapLibre can add vector layers on top.
    ============================================ */
 const MapStyles = {
   streets: {
@@ -11,6 +13,7 @@ const MapStyles = {
     name: 'Satellite',
     url: {
       version: 8, name: 'Satellite IGN',
+      glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
       sources: {
         'esri-fallback': {
           type: 'raster',
@@ -34,6 +37,7 @@ const MapStyles = {
     name: 'Topo',
     url: {
       version: 8, name: 'OpenTopoMap',
+      glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
       sources: {
         'topo-tiles': {
           type: 'raster',
@@ -49,6 +53,7 @@ const MapStyles = {
     name: 'Plan IGN',
     url: {
       version: 8, name: 'Plan IGN',
+      glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
       sources: {
         'ign-plan-tiles': {
           type: 'raster',

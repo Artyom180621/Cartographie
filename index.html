@@ -3,15 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="description" content="Antigravity - Application de cartographie avancée">
+  <meta name="description" content="Cartographe - Application de cartographie avancée">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Antigravity">
+  <meta name="apple-mobile-web-app-title" content="Cartographe">
   <meta name="theme-color" content="#0a0e1a">
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
-  <title>Antigravity — Cartographie</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+  <title>Cartographe</title>
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
   <link rel="stylesheet" href="css/style.css">
   <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
@@ -21,9 +23,9 @@
   <!-- ===== Sidebar ===== -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <div class="sidebar-logo">A</div>
+      <div class="sidebar-logo">C</div>
       <div>
-        <div class="sidebar-title">Antigravity</div>
+        <div class="sidebar-title">Cartographe</div>
         <div class="sidebar-subtitle">Cartographie Avancée</div>
       </div>
       <button class="btn-ghost" style="margin-left:auto" onclick="toggleSidebar()" title="Réduire">
@@ -131,27 +133,6 @@
           <div class="layer-item" onclick="toggleLayer('grid-layer')">
             <div class="layer-toggle" id="toggle-grid-layer"></div>
             <span>Grille coordonnées</span>
-          </div>
-        </div>
-
-        <!-- Offline Section -->
-        <div class="section" style="margin-top:16px">
-          <div class="section-header"><span class="section-title">Mode hors ligne</span></div>
-          <div style="padding:8px">
-            <p style="font-size:11px;color:var(--text-muted);margin-bottom:8px" id="offline-stats">0 tuiles en cache</p>
-            <div id="offline-progress" style="display:none;align-items:center;gap:8px;margin-bottom:8px"></div>
-            <div style="display:flex;flex-direction:column;gap:6px">
-              <button class="btn btn-primary btn-sm btn-block" onclick="Offline.startZoneSelect()">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
-                📍 Sélectionner une zone
-              </button>
-              <button class="btn btn-secondary btn-sm btn-block" onclick="Offline.downloadArea()">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Vue actuelle
-              </button>
-              <button class="btn btn-danger btn-sm" onclick="Offline.clearCache()" style="align-self:flex-end">🗑 Vider</button>
-            </div>
-            <p style="font-size:10px;color:var(--text-muted);margin-top:6px">Télécharge toutes les cartes (Rues, Satellite, Topo, IGN) pour la zone choisie.</p>
           </div>
         </div>
       </div>
@@ -286,7 +267,6 @@
 <script src="js/storage.js"></script>
 <script src="js/geo.js"></script>
 <script src="js/ui.js"></script>
-<script src="js/offline.js"></script>
 <script src="js/styles.js"></script>
 <script src="js/layers.js"></script>
 <script src="js/map.js"></script>

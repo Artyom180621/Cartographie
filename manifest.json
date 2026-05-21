@@ -1,7 +1,7 @@
 {
-  "name": "Antigravity Cartographie",
-  "short_name": "Antigravity",
-  "description": "Application de cartographie avancée — Satellite, IGN, Topo, Hors ligne",
+  "name": "Cartographe",
+  "short_name": "Cartographe",
+  "description": "Application de cartographie avancée — Satellite, IGN, Topo",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

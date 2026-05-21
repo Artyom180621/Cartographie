@@ -7,9 +7,7 @@ let measurePoints = [];
 let measureMarkers = [];
 
 // --- Boot ---
-document.addEventListener('DOMContentLoaded', () => {
-  Offline.init().then(boot).catch(boot);
-});
+document.addEventListener('DOMContentLoaded', boot);
 
 function boot() {
   const map = MapEngine.init();
@@ -19,10 +17,9 @@ function boot() {
     Drawing.init();
     Importer.init();
     Activity.init();
-    Offline.updateStats();
     setupMapInteractions(map);
     setupNetworkStatus();
-    console.log('%c✈ Antigravity Loaded', 'color:#6382ff;font-size:16px;font-weight:bold');
+    console.log('%c🗺 Cartographe Loaded', 'color:#6382ff;font-size:16px;font-weight:bold');
   });
 }
 
