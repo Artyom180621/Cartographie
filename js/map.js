@@ -1,12 +1,10 @@
 /* ============================================
    Map - MapLibre GL init & style switching
-   Uses a PERSISTENT style.load listener so
-   layers survive unlimited style switches.
+   La couche dessin est TOUJOURS au-dessus.
    ============================================ */
 const MapEngine = (() => {
   let map = null;
   let currentStyle = 'streets';
-  let styleReady = false;
 
   function init() {
     map = new maplibregl.Map({
@@ -25,50 +23,64 @@ const MapEngine = (() => {
     map.on('mousemove', (e) => {
       const { lng, lat } = e.lngLat;
       const z = Math.round(map.getZoom() * 10) / 10;
-      document.getElementById('coord-display').textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)} | Z: ${z}`;
+      const el = document.getElementById('coord-display');
+      if (el) el.textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)} | Z: ${z}`;
     });
 
     map.on('zoomend', () => {
-      document.getElementById('status-zoom').textContent = `Zoom: ${Math.round(map.getZoom() * 10) / 10}`;
+      const el = document.getElementById('status-zoom');
+      if (el) el.textContent = `Zoom: ${Math.round(map.getZoom() * 10) / 10}`;
     });
 
-    /* PERSISTENT listener — fires on EVERY style load (initial + switches) */
-    map.on('style.load', () => {
-      styleReady = true;
-      // Use setTimeout(0) to let MapLibre finalize the style internally
-      setTimeout(() => {
-        Layers.addAll(map);
-        // Re-push module data
-        if (typeof Drawing !== 'undefined' && Drawing.renderOnMap) Drawing.renderOnMap();
-        if (typeof Routes !== 'undefined' && Routes.renderSavedRoutesOnMap) Routes.renderSavedRoutesOnMap();
-        if (typeof Importer !== 'undefined' && Importer.renderOnMap) Importer.renderOnMap();
-      }, 0);
-    });
+    /* Quand un style se charge (premier load OU switch), on recrée les overlays */
+    map.on('style.load', rebuildOverlays);
 
-    /* First load: emit map-ready for app.js boot */
-    map.once('load', () => {
-      document.dispatchEvent(new Event('map-ready'));
-    });
+    /* Premier load : déclencher le boot de l'app */
+    map.once('load', () => document.dispatchEvent(new Event('map-ready')));
 
     return map;
+  }
+
+  /** Recréer toutes les couches de dessin au-dessus du fond de carte */
+  function rebuildOverlays() {
+    // Essayer immédiatement
+    Layers.addAll(map);
+    pushModuleData();
+
+    // Et aussi avec un délai pour les styles raster qui sont parfois lents
+    setTimeout(() => {
+      Layers.addAll(map);
+      pushModuleData();
+    }, 100);
+
+    setTimeout(() => {
+      Layers.addAll(map);
+      pushModuleData();
+    }, 500);
+  }
+
+  /** Re-pousser les données des modules vers les sources */
+  function pushModuleData() {
+    try { if (typeof Drawing !== 'undefined' && Drawing.renderOnMap) Drawing.renderOnMap(); } catch(e) {}
+    try { if (typeof Routes !== 'undefined' && Routes.renderSavedRoutesOnMap) Routes.renderSavedRoutesOnMap(); } catch(e) {}
+    try { if (typeof Importer !== 'undefined' && Importer.renderOnMap) Importer.renderOnMap(); } catch(e) {}
   }
 
   function setStyle(styleKey) {
     if (!map || !MapStyles[styleKey]) return;
     currentStyle = styleKey;
-    styleReady = false;
 
-    // setStyle destroys all sources/layers — the persistent style.load listener will restore them
+    // setStyle détruit tout. Le listener 'style.load' va tout reconstruire.
     map.setStyle(MapStyles[styleKey].url);
 
     document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(`style-${styleKey}`)?.classList.add('active');
-    document.getElementById('status-tiles').textContent = `Tuiles: ${MapStyles[styleKey].label}`;
+    const el = document.getElementById('status-tiles');
+    if (el) el.textContent = `Tuiles: ${MapStyles[styleKey].label}`;
   }
 
   function getMap() { return map; }
   function getCurrentStyle() { return currentStyle; }
-  function isReady() { return styleReady; }
 
-  return { init, setStyle, getMap, getCurrentStyle, isReady };
+  return { init, setStyle, getMap, getCurrentStyle };
 })();

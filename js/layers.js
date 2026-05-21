@@ -1,27 +1,29 @@
 /* ============================================
-   Layers - Data layer definitions & toggle
-   All drawing/route/measure elements are pure
-   MapLibre layers → they never drift on zoom.
+   Layers — Overlay layers (dessins, routes, etc.)
+   Toujours AU-DESSUS du fond de carte.
+   Survivent à tous les changements de style.
    ============================================ */
 const Layers = (() => {
-  const EMPTY_FC = { type: 'FeatureCollection', features: [] };
-  const EMPTY_LS = { type: 'Feature', geometry: { type: 'LineString', coordinates: [] } };
 
-  /* Source IDs */
-  const SOURCE_IDS = [
-    'route-line', 'route-line-border', 'route-points', 'saved-routes',
-    'drawings', 'imports', 'draw-temp-line', 'activity-track',
-    'measure-line', 'measure-points'
-  ];
+  /* ---- Data cache : survit aux changements de style ---- */
+  const cache = {};
 
-  /* Our own data cache — survives style switches */
-  const dataCache = {};
-
-  /* Visibility state — survives style switches */
+  /* ---- Visibility state ---- */
   const vis = { 'routes-layer': true, 'drawings-layer': true, 'grid-layer': true };
 
-  /* Layer definitions */
-  function defs() {
+  /* ---- Source definitions ---- */
+  const SRC = {
+    'route-line':        'fc', 'route-line-border': 'fc', 'route-points': 'fc',
+    'saved-routes':      'fc', 'drawings':          'fc', 'imports':      'fc',
+    'draw-temp-line':    'ls', 'activity-track':    'ls',
+    'measure-line':      'fc', 'measure-points':    'fc',
+  };
+
+  function emptyFC() { return { type: 'FeatureCollection', features: [] }; }
+  function emptyLS() { return { type: 'Feature', geometry: { type: 'LineString', coordinates: [] } }; }
+
+  /* ---- Layer definitions ---- */
+  function allLayers() {
     return [
       { id: 'saved-routes-layer',      type: 'line',   source: 'saved-routes',      paint: { 'line-color': ['get','color'], 'line-width': 4, 'line-opacity': 0.8 }, layout: { 'line-cap':'round','line-join':'round' } },
       { id: 'route-line-border-layer', type: 'line',   source: 'route-line-border', paint: { 'line-color': '#3b55cc', 'line-width': 8, 'line-opacity': 0.5 }, layout: { 'line-cap':'round','line-join':'round' } },
@@ -40,68 +42,53 @@ const Layers = (() => {
     ];
   }
 
-  const TOGGLE_MAP = {
+  const GROUPS = {
     'routes-layer':   ['route-line-layer','route-line-border-layer','route-points-layer','saved-routes-layer'],
     'drawings-layer': ['drawings-fill','drawings-line','drawings-points','draw-temp-line-layer','imports-fill','imports-line','imports-points'],
     'grid-layer':     [],
   };
 
-  /** Store data in cache AND push to map source */
-  function setSourceData(map, srcId, data) {
-    dataCache[srcId] = data;
-    try {
-      const s = map?.getSource(srcId);
-      if (s) s.setData(data);
-    } catch(e) { /* source not ready yet, data is cached for later */ }
+  /* ==== PUBLIC : store data + push to map ==== */
+  function setSourceData(map, id, data) {
+    cache[id] = data;
+    try { if (map && map.getSource(id)) map.getSource(id).setData(data); } catch(e) {}
   }
 
-  /** Create all sources + layers. Safe to call multiple times. */
+  /* ==== PUBLIC : create all overlay sources + layers ==== */
   function addAll(map) {
-    if (!map.isStyleLoaded()) {
-      console.warn('[Layers] Style not loaded yet, deferring...');
-      return;
+    // 1. Add sources
+    for (const [id, kind] of Object.entries(SRC)) {
+      if (map.getSource(id)) continue;
+      const data = cache[id] || (kind === 'ls' ? emptyLS() : emptyFC());
+      try { map.addSource(id, { type: 'geojson', data }); } catch(e) { console.warn('[L] src:', id, e.message); }
     }
-    // Sources
-    for (const id of SOURCE_IDS) {
-      if (!map.getSource(id)) {
-        const data = dataCache[id] || (id === 'draw-temp-line' || id === 'activity-track' ? { ...EMPTY_LS } : { ...EMPTY_FC });
-        try { map.addSource(id, { type: 'geojson', data }); } catch(e) { console.warn('[Layers] src fail:', id, e.message); }
-      }
+    // 2. Add layers (always on top)
+    for (const def of allLayers()) {
+      if (map.getLayer(def.id)) continue;
+      try { map.addLayer(def); } catch(e) { console.warn('[L] lyr:', def.id, e.message); }
     }
-    // Layers
-    for (const def of defs()) {
-      if (!map.getLayer(def.id)) {
-        try { map.addLayer(def); } catch(e) { console.warn('[Layers] lyr fail:', def.id, e.message); }
-      }
+    // 3. Push cached data into sources
+    for (const [id, data] of Object.entries(cache)) {
+      try { if (map.getSource(id)) map.getSource(id).setData(data); } catch(e) {}
     }
-    // Push cached data to newly-created sources
-    for (const id of SOURCE_IDS) {
-      if (dataCache[id]) {
-        try { map.getSource(id)?.setData(dataCache[id]); } catch(e) {}
-      }
-    }
-    applyVis(map);
-    console.log('[Layers] ✓ All layers ready');
-  }
-
-  /** Apply visibility state */
-  function applyVis(map) {
-    for (const [gid, lids] of Object.entries(TOGGLE_MAP)) {
+    // 4. Apply visibility
+    for (const [gid, lids] of Object.entries(GROUPS)) {
       const v = vis[gid] ? 'visible' : 'none';
       lids.forEach(lid => { try { if (map.getLayer(lid)) map.setLayoutProperty(lid, 'visibility', v); } catch(e) {} });
       const el = document.getElementById(`toggle-${gid}`);
       if (el) vis[gid] ? el.classList.add('on') : el.classList.remove('on');
     }
+    console.log('[Layers] ✓ ready');
   }
 
-  /** Toggle a layer group */
+  /* ==== PUBLIC : toggle visibility ==== */
   function toggle(map, gid) {
     if (!map) return;
     vis[gid] = !vis[gid];
     const v = vis[gid] ? 'visible' : 'none';
     const el = document.getElementById(`toggle-${gid}`);
     if (el) vis[gid] ? el.classList.add('on') : el.classList.remove('on');
-    (TOGGLE_MAP[gid] || []).forEach(lid => {
+    (GROUPS[gid] || []).forEach(lid => {
       try { if (map.getLayer(lid)) map.setLayoutProperty(lid, 'visibility', v); } catch(e) {}
     });
   }
