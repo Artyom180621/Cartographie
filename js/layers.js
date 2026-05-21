@@ -93,5 +93,10 @@ const Layers = (() => {
     });
   }
 
-  return { addAll, toggle, setSourceData };
+  function getFirstLayerId() {
+    const layers = allLayers();
+    return layers.length > 0 ? layers[0].id : null;
+  }
+
+  return { addAll, toggle, setSourceData, getFirstLayerId };
 })();

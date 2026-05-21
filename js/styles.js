@@ -1,68 +1,60 @@
 /* ============================================
-   Styles - Map tile source definitions
-   All raster styles include glyphs + sprite
-   so MapLibre can add vector layers on top.
+   Styles - Base map tile URLs (raster only)
+   On ne change JAMAIS le style MapLibre.
+   On change juste l'URL des tuiles du fond.
    ============================================ */
 const MapStyles = {
   streets: {
     name: 'Rues',
-    url: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-    label: 'OSM Dark'
+    tiles: ['https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'],
+    tileSize: 256,
+    maxzoom: 20,
+    label: 'Carto Dark'
   },
   satellite: {
     name: 'Satellite',
-    url: {
-      version: 8, name: 'Satellite IGN',
-      glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
-      sources: {
-        'esri-fallback': {
-          type: 'raster',
-          tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
-          tileSize: 256, maxzoom: 19, attribution: '&copy; Esri, Maxar'
-        },
-        'satellite-tiles': {
-          type: 'raster',
-          tiles: ['https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&STYLE=normal&FORMAT=image/jpeg&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}'],
-          tileSize: 256, maxzoom: 19, attribution: '&copy; IGN France'
-        }
-      },
-      layers: [
-        { id: 'esri-fallback-layer', type: 'raster', source: 'esri-fallback', minzoom: 0, maxzoom: 19 },
-        { id: 'satellite-layer', type: 'raster', source: 'satellite-tiles', minzoom: 0, maxzoom: 19 }
-      ]
-    },
-    label: 'IGN Ortho + Esri'
+    tiles: [
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+    ],
+    tileSize: 256,
+    maxzoom: 19,
+    label: 'Satellite Esri'
   },
   topo: {
     name: 'Topo',
-    url: {
-      version: 8, name: 'OpenTopoMap',
-      glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
-      sources: {
-        'topo-tiles': {
-          type: 'raster',
-          tiles: ['https://a.tile.opentopomap.org/{z}/{x}/{y}.png', 'https://b.tile.opentopomap.org/{z}/{x}/{y}.png', 'https://c.tile.opentopomap.org/{z}/{x}/{y}.png'],
-          tileSize: 256, maxzoom: 17, attribution: '&copy; OpenTopoMap (CC-BY-SA)'
-        }
-      },
-      layers: [{ id: 'topo-layer', type: 'raster', source: 'topo-tiles', minzoom: 0, maxzoom: 17 }]
-    },
+    tiles: [
+      'https://a.tile.opentopomap.org/{z}/{x}/{y}.png',
+      'https://b.tile.opentopomap.org/{z}/{x}/{y}.png'
+    ],
+    tileSize: 256,
+    maxzoom: 17,
     label: 'OpenTopoMap'
   },
   ign: {
     name: 'Plan IGN',
-    url: {
-      version: 8, name: 'Plan IGN',
-      glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
-      sources: {
-        'ign-plan-tiles': {
-          type: 'raster',
-          tiles: ['https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}'],
-          tileSize: 256, maxzoom: 18, attribution: '&copy; IGN France'
-        }
-      },
-      layers: [{ id: 'ign-plan-layer', type: 'raster', source: 'ign-plan-tiles', minzoom: 0, maxzoom: 18 }]
-    },
+    tiles: [
+      'https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}'
+    ],
+    tileSize: 256,
+    maxzoom: 18,
     label: 'Plan IGN'
   }
+};
+
+/* Le style MapLibre unique et permanent — jamais remplacé */
+const BASE_STYLE = {
+  version: 8,
+  name: 'Cartographe',
+  glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+  sources: {
+    'basemap': {
+      type: 'raster',
+      tiles: MapStyles.streets.tiles,
+      tileSize: MapStyles.streets.tileSize,
+      maxzoom: MapStyles.streets.maxzoom
+    }
+  },
+  layers: [
+    { id: 'basemap-layer', type: 'raster', source: 'basemap' }
+  ]
 };

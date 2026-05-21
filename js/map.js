@@ -1,6 +1,8 @@
 /* ============================================
-   Map - MapLibre GL init & style switching
-   La couche dessin est TOUJOURS au-dessus.
+   Map - MapLibre GL init & basemap switching
+   UN SEUL style permanent. On ne change que
+   les tuiles du fond de carte. Les overlays
+   (dessins, routes) ne sont JAMAIS détruits.
    ============================================ */
 const MapEngine = (() => {
   let map = null;
@@ -9,7 +11,7 @@ const MapEngine = (() => {
   function init() {
     map = new maplibregl.Map({
       container: 'map',
-      style: MapStyles.streets.url,
+      style: BASE_STYLE,
       center: [2.3522, 48.8566],
       zoom: 5,
       attributionControl: false,
@@ -32,51 +34,50 @@ const MapEngine = (() => {
       if (el) el.textContent = `Zoom: ${Math.round(map.getZoom() * 10) / 10}`;
     });
 
-    /* Quand un style se charge (premier load OU switch), on recrée les overlays */
-    map.on('style.load', rebuildOverlays);
-
-    /* Premier load : déclencher le boot de l'app */
-    map.once('load', () => document.dispatchEvent(new Event('map-ready')));
+    map.on('load', () => {
+      // Ajouter les overlays UNE SEULE FOIS — ils ne seront jamais détruits
+      Layers.addAll(map);
+      document.dispatchEvent(new Event('map-ready'));
+    });
 
     return map;
   }
 
-  /** Recréer toutes les couches de dessin au-dessus du fond de carte */
-  function rebuildOverlays() {
-    // Essayer immédiatement
-    Layers.addAll(map);
-    pushModuleData();
-
-    // Et aussi avec un délai pour les styles raster qui sont parfois lents
-    setTimeout(() => {
-      Layers.addAll(map);
-      pushModuleData();
-    }, 100);
-
-    setTimeout(() => {
-      Layers.addAll(map);
-      pushModuleData();
-    }, 500);
-  }
-
-  /** Re-pousser les données des modules vers les sources */
-  function pushModuleData() {
-    try { if (typeof Drawing !== 'undefined' && Drawing.renderOnMap) Drawing.renderOnMap(); } catch(e) {}
-    try { if (typeof Routes !== 'undefined' && Routes.renderSavedRoutesOnMap) Routes.renderSavedRoutesOnMap(); } catch(e) {}
-    try { if (typeof Importer !== 'undefined' && Importer.renderOnMap) Importer.renderOnMap(); } catch(e) {}
-  }
-
+  /** Changer le fond de carte sans toucher aux overlays */
   function setStyle(styleKey) {
     if (!map || !MapStyles[styleKey]) return;
     currentStyle = styleKey;
+    const def = MapStyles[styleKey];
 
-    // setStyle détruit tout. Le listener 'style.load' va tout reconstruire.
-    map.setStyle(MapStyles[styleKey].url);
+    // Juste changer les tuiles du fond — les overlays ne bougent pas
+    const src = map.getSource('basemap');
+    if (src) {
+      // MapLibre ne permet pas de changer les tiles directement sur un source existant.
+      // On doit supprimer et recréer la source basemap + son layer.
+      if (map.getLayer('basemap-layer')) map.removeLayer('basemap-layer');
+      map.removeSource('basemap');
 
+      map.addSource('basemap', {
+        type: 'raster',
+        tiles: def.tiles,
+        tileSize: def.tileSize || 256,
+        maxzoom: def.maxzoom || 19
+      });
+
+      // Ajouter le layer basemap SOUS tous les overlays
+      const firstOverlay = Layers.getFirstLayerId();
+      if (firstOverlay && map.getLayer(firstOverlay)) {
+        map.addLayer({ id: 'basemap-layer', type: 'raster', source: 'basemap' }, firstOverlay);
+      } else {
+        map.addLayer({ id: 'basemap-layer', type: 'raster', source: 'basemap' });
+      }
+    }
+
+    // Update UI
     document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(`style-${styleKey}`)?.classList.add('active');
     const el = document.getElementById('status-tiles');
-    if (el) el.textContent = `Tuiles: ${MapStyles[styleKey].label}`;
+    if (el) el.textContent = `Tuiles: ${def.label}`;
   }
 
   function getMap() { return map; }
