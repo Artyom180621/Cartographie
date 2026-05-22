@@ -19,6 +19,8 @@ function boot() {
     try { Activity.init(); } catch (e) { console.error('Activity init failed:', e); }
     try { setupMapInteractions(map); } catch (e) { console.error('Map interactions setup failed:', e); }
     try { setupNetworkStatus(); } catch (e) { console.error('Network status setup failed:', e); }
+    try { initLayerPanel(); } catch (e) { console.error('Layer panel init failed:', e); }
+    try { MapEngine.updateStatusBar(); } catch (e) {}
     console.log('%c🗺 Cartographe Loaded', 'color:#6382ff;font-size:16px;font-weight:bold');
   });
 }
@@ -110,8 +112,178 @@ function geolocate() {
   );
 }
 
+/* ============================================
+   Layer Panel — Multi-basemap management
+   ============================================ */
+
+function initLayerPanel() {
+  renderBasemapList();
+  initDragAndDrop();
+  // Pre-fill OpenAIP API key
+  const savedKey = getOpenAIPKey();
+  const keyInput = document.getElementById('openaip-api-key');
+  if (keyInput && savedKey) {
+    keyInput.value = savedKey;
+  }
+}
+
+function renderBasemapList() {
+  const container = document.getElementById('basemap-list');
+  if (!container) return;
+  container.innerHTML = '';
+
+  for (const key of BasemapState.order) {
+    const def = MapStyles[key];
+    if (!def) continue;
+
+    const isVisible = BasemapState.visible[key];
+    const opacity = BasemapState.opacity[key];
+
+    const item = document.createElement('div');
+    item.className = `basemap-item${isVisible ? ' active' : ''}`;
+    item.dataset.key = key;
+    item.draggable = true;
+
+    item.innerHTML = `
+      <div class="basemap-item-drag" title="Glisser pour réordonner">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="8" cy="4" r="2"/><circle cx="16" cy="4" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="8" cy="20" r="2"/><circle cx="16" cy="20" r="2"/></svg>
+      </div>
+      <button class="basemap-item-eye${isVisible ? ' on' : ''}" onclick="toggleBasemapUI('${key}')" title="Afficher/masquer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          ${isVisible
+            ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
+            : '<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'
+          }
+        </svg>
+      </button>
+      <div class="basemap-item-info">
+        <span class="basemap-item-icon">${def.icon}</span>
+        <span class="basemap-item-name">${def.name}</span>
+      </div>
+      <div class="basemap-item-opacity">
+        <input type="range" class="opacity-slider" min="0" max="100" value="${opacity}"
+               oninput="setBasemapOpacityUI('${key}', this.value)"
+               title="Opacité: ${opacity}%"
+               ${!isVisible ? 'disabled' : ''}>
+        <span class="opacity-value">${opacity}%</span>
+      </div>
+    `;
+
+    container.appendChild(item);
+  }
+}
+
+function toggleBasemapUI(key) {
+  // For OpenAIP layers, check API key first
+  const def = MapStyles[key];
+  if (def?.isOpenAIP && !BasemapState.visible[key]) {
+    const apiKey = getOpenAIPKey();
+    if (!apiKey) {
+      showToast('Entrez votre clé API OpenAIP pour activer les couches aéronautiques', 'info');
+      const input = document.getElementById('openaip-api-key');
+      if (input) input.focus();
+      return;
+    }
+  }
+
+  MapEngine.toggleBasemap(key);
+  renderBasemapList();
+  initDragAndDrop();
+}
+
+function setBasemapOpacityUI(key, value) {
+  MapEngine.setBasemapOpacity(key, parseInt(value));
+  const item = document.querySelector(`.basemap-item[data-key="${key}"]`);
+  if (item) {
+    const label = item.querySelector('.opacity-value');
+    if (label) label.textContent = `${value}%`;
+    const slider = item.querySelector('.opacity-slider');
+    if (slider) slider.title = `Opacité: ${value}%`;
+  }
+}
+
+function saveOpenAIPKey() {
+  const input = document.getElementById('openaip-api-key');
+  if (!input) return;
+  const key = input.value.trim();
+  if (!key) {
+    showToast('Veuillez entrer une clé API valide', 'error');
+    return;
+  }
+  MapEngine.setOpenAIPKey(key);
+  renderBasemapList();
+  initDragAndDrop();
+}
+
+/* ---- Drag & Drop for reordering ---- */
+let draggedItem = null;
+
+function initDragAndDrop() {
+  const container = document.getElementById('basemap-list');
+  if (!container) return;
+
+  const items = container.querySelectorAll('.basemap-item');
+  items.forEach(item => {
+    item.addEventListener('dragstart', handleDragStart);
+    item.addEventListener('dragend', handleDragEnd);
+    item.addEventListener('dragover', handleDragOver);
+    item.addEventListener('dragenter', handleDragEnter);
+    item.addEventListener('dragleave', handleDragLeave);
+    item.addEventListener('drop', handleDrop);
+  });
+}
+
+function handleDragStart(e) {
+  draggedItem = this;
+  this.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', this.dataset.key);
+}
+
+function handleDragEnd(e) {
+  this.classList.remove('dragging');
+  document.querySelectorAll('.basemap-item').forEach(i => i.classList.remove('drag-over'));
+  draggedItem = null;
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+}
+
+function handleDragEnter(e) {
+  e.preventDefault();
+  if (this !== draggedItem) {
+    this.classList.add('drag-over');
+  }
+}
+
+function handleDragLeave(e) {
+  this.classList.remove('drag-over');
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  this.classList.remove('drag-over');
+
+  if (!draggedItem || this === draggedItem) return;
+
+  const container = document.getElementById('basemap-list');
+  const items = [...container.querySelectorAll('.basemap-item')];
+  const fromIndex = items.indexOf(draggedItem);
+  const toIndex = items.indexOf(this);
+
+  if (fromIndex < toIndex) {
+    this.parentNode.insertBefore(draggedItem, this.nextSibling);
+  } else {
+    this.parentNode.insertBefore(draggedItem, this);
+  }
+
+  const newOrder = [...container.querySelectorAll('.basemap-item')].map(i => i.dataset.key);
+  MapEngine.reorderBasemaps(newOrder);
+}
+
 // --- Delegate functions for HTML onclick ---
-function setMapStyle(s) { MapEngine.setStyle(s); }
 function toggleLayer(id) { Layers.toggle(MapEngine.getMap(), id); }
 function setDrawMode(m) { Drawing.setMode(m); }
 function clearAllDrawings() { Drawing.clearAll(); }

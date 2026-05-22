@@ -39,7 +39,7 @@
   <!-- ===== Sidebar ===== -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <div class="sidebar-logo">C</div>
+      <img src="icon-192.png" alt="Cartographe" class="sidebar-logo">
       <div>
         <div class="sidebar-title">Cartographe</div>
         <div class="sidebar-subtitle">Cartographie Avancée</div>
@@ -129,15 +129,56 @@
 
       <!-- Layers Tab -->
       <div class="tab-panel" id="tab-layers" style="display:none">
-        <p class="form-label" style="margin-bottom:10px">Style de carte</p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
-          <div class="style-btn active" id="style-streets" onclick="setMapStyle('streets')" style="background:linear-gradient(135deg,#2d3748,#4a5568)"><span>Rues</span></div>
-          <div class="style-btn" id="style-satellite" onclick="setMapStyle('satellite')" style="background:linear-gradient(135deg,#1a3a2a,#2d5a3a)"><span>Satellite</span></div>
-          <div class="style-btn" id="style-topo" onclick="setMapStyle('topo')" style="background:linear-gradient(135deg,#3a2a1a,#5a4a3a)"><span>Topo</span></div>
-          <div class="style-btn" id="style-ign" onclick="setMapStyle('ign')" style="background:linear-gradient(135deg,#1a2a4a,#2d3a6a)"><span>Plan IGN</span></div>
-        </div>
+        <!-- Basemap multi-layer section -->
         <div class="section">
-          <div class="section-header"><span class="section-title">Couches superposées</span></div>
+          <div class="section-header">
+            <span class="section-title">Fonds de carte</span>
+            <span style="font-size:10px;color:var(--text-muted)">↕ Glisser pour réordonner</span>
+          </div>
+          <div class="basemap-list" id="basemap-list">
+            <!-- Rendered dynamically by initLayerPanel() -->
+          </div>
+        </div>
+
+        <!-- OpenAIP Config -->
+        <div class="section">
+          <div class="section-header"><span class="section-title">✈️ Données aéronautiques — OpenAIP</span></div>
+          <div class="drone-config">
+            <p style="font-size:11px;color:var(--text-muted);margin-bottom:6px">
+              <strong>✈️ Cartes Aéro</strong> = tout (aéroports, navaids, espaces)<br>
+              <strong>🛩️ Zones Drone</strong> = espaces aériens uniquement
+            </p>
+            <p style="font-size:11px;color:var(--text-muted);margin-bottom:8px">
+              Clé API gratuite sur <a href="https://www.openaip.net" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">openaip.net</a>
+            </p>
+            <div style="display:flex;gap:6px">
+              <input type="text" class="form-input" id="openaip-api-key" placeholder="Clé API OpenAIP..." style="flex:1;font-size:11px">
+              <button class="btn btn-primary btn-sm" onclick="saveOpenAIPKey()">OK</button>
+            </div>
+          </div>
+          <!-- Airspace Legend -->
+          <div class="airspace-legend" id="airspace-legend">
+            <p class="form-label" style="margin-top:10px;margin-bottom:6px">Légende espaces aériens</p>
+            <div class="legend-item"><span class="legend-color" style="background:rgba(174,30,34,0.5);border:2px solid #ae1e22"></span><span>Classe A — Interdit (FL600+)</span></div>
+            <div class="legend-item"><span class="legend-color" style="background:rgba(52,101,164,0.5);border:2px solid #3465a4"></span><span>Classe B — Contrôlé (≤ FL180)</span></div>
+            <div class="legend-item"><span class="legend-color" style="background:rgba(52,101,164,0.4);border:2px solid #3465a4;border-style:dashed"></span><span>Classe C — Contrôlé (≤ FL180)</span></div>
+            <div class="legend-item"><span class="legend-color" style="background:rgba(52,101,164,0.3);border:2px solid #3465a4;border-style:dotted"></span><span>Classe D — Contrôlé (≤ 2500ft)</span></div>
+            <div class="legend-item"><span class="legend-color" style="background:rgba(117,80,123,0.4);border:2px solid #754b7b"></span><span>Classe E — Semi-contrôlé</span></div>
+            <div class="legend-item"><span class="legend-color" style="background:rgba(78,154,6,0.3);border:2px solid #4e9a06"></span><span>Classe G — Non contrôlé (120m max drone)</span></div>
+            <div class="legend-item"><span class="legend-color" style="background:rgba(204,0,0,0.4);border:2px solid #cc0000"></span><span>Zone P — Interdite (prohibited)</span></div>
+            <div class="legend-item"><span class="legend-color" style="background:rgba(245,121,0,0.4);border:2px solid #f57900"></span><span>Zone R — Restreinte (restricted)</span></div>
+            <div class="legend-item"><span class="legend-color" style="background:rgba(237,212,0,0.4);border:2px solid #edd400"></span><span>Zone D — Dangereuse (danger)</span></div>
+            <div class="legend-item"><span class="legend-color" style="background:rgba(52,152,219,0.3);border:2px solid #3498db"></span><span>CTR — Zone de contrôle aéroport</span></div>
+            <div class="legend-item"><span class="legend-color" style="background:rgba(192,57,43,0.3);border:2px solid #c0392b"></span><span>TMA — Région terminale</span></div>
+            <p style="font-size:10px;color:var(--text-muted);margin-top:6px;line-height:1.4">
+              ⚠️ Données indicatives — consultez toujours votre autorité aéronautique locale avant de voler. En classe G, limite drone généralement 120m AGL.
+            </p>
+          </div>
+        </div>
+
+        <!-- Data overlays -->
+        <div class="section">
+          <div class="section-header"><span class="section-title">Couches de données</span></div>
           <div class="layer-item" onclick="toggleLayer('routes-layer')">
             <div class="layer-toggle on" id="toggle-routes-layer"></div>
             <span>Itinéraires</span>

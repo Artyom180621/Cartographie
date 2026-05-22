@@ -1,12 +1,11 @@
 /* ============================================
-   Map - MapLibre GL init & basemap switching
-   UN SEUL style permanent. On ne change que
-   les tuiles du fond de carte. Les overlays
-   (dessins, routes) ne sont JAMAIS détruits.
+   Map - MapLibre GL init & multi-basemap system
+   Chaque basemap est un layer raster indépendant.
+   On peut en superposer plusieurs, changer leur
+   opacité, et réordonner via moveLayer.
    ============================================ */
 const MapEngine = (() => {
   let map = null;
-  let currentStyle = 'streets';
 
   function init() {
     map = new maplibregl.Map({
@@ -35,7 +34,6 @@ const MapEngine = (() => {
     });
 
     map.on('load', () => {
-      // Ajouter les overlays UNE SEULE FOIS — ils ne seront jamais détruits
       Layers.addAll(map);
       document.dispatchEvent(new Event('map-ready'));
     });
@@ -43,33 +41,121 @@ const MapEngine = (() => {
     return map;
   }
 
-  /** Changer le fond de carte sans toucher aux overlays */
-  function setStyle(styleKey) {
-    if (!map || !MapStyles[styleKey]) return;
-    currentStyle = styleKey;
+  /* ---- Multi-basemap controls ---- */
 
-    // Toggle visibility of the basemap layers
-    for (const key of Object.keys(MapStyles)) {
-      const layerId = `basemap-${key}-layer`;
-      const isCurrent = key === styleKey;
+  /** Toggle a basemap layer on/off */
+  function toggleBasemap(key) {
+    if (!map || !MapStyles[key]) return;
+    const layerId = `basemap-${key}-layer`;
+    if (!map.getLayer(layerId)) return;
+
+    const isVisible = !BasemapState.visible[key];
+    BasemapState.setVisible(key, isVisible);
+
+    try {
+      map.setLayoutProperty(layerId, 'visibility', isVisible ? 'visible' : 'none');
+    } catch (e) {
+      console.warn(`[Map] toggleBasemap ${key}:`, e);
+    }
+
+    updateStatusBar();
+  }
+
+  /** Set opacity for a basemap (0-100) */
+  function setBasemapOpacity(key, opacity) {
+    if (!map) return;
+    const layerId = `basemap-${key}-layer`;
+    BasemapState.setOpacity(key, opacity);
+    try {
+      if (map.getLayer(layerId)) {
+        map.setPaintProperty(layerId, 'raster-opacity', opacity / 100);
+      }
+    } catch (e) {
+      console.warn(`[Map] setOpacity ${key}:`, e);
+    }
+  }
+
+  /** Reorder basemap layers according to new order array */
+  function reorderBasemaps(orderedKeys) {
+    if (!map) return;
+    BasemapState.order = orderedKeys;
+
+    const firstOverlay = Layers.getFirstLayerId();
+
+    for (let i = 0; i < orderedKeys.length; i++) {
+      const layerId = `basemap-${orderedKeys[i]}-layer`;
       try {
         if (map.getLayer(layerId)) {
-          map.setLayoutProperty(layerId, 'visibility', isCurrent ? 'visible' : 'none');
+          map.moveLayer(layerId, firstOverlay || undefined);
         }
       } catch (e) {
-        console.warn(`Failed to set visibility for ${layerId}:`, e);
+        console.warn(`[Map] reorder ${layerId}:`, e);
+      }
+    }
+  }
+
+  /** Update OpenAIP layers (both aero + drone) with a new API key */
+  function setOpenAIPKey(apiKey) {
+    if (!map) return;
+    localStorage.setItem(OPENAIP_STORAGE_KEY, apiKey);
+
+    // Update both OpenAIP layers
+    const openAIPLayers = ['aero', 'drone'];
+    for (const key of openAIPLayers) {
+      const def = MapStyles[key];
+      if (!def || !def.isOpenAIP) continue;
+
+      const sourceId = `basemap-${key}`;
+      const layerId = `basemap-${key}-layer`;
+
+      // Remove old layer and source
+      try {
+        if (map.getLayer(layerId)) map.removeLayer(layerId);
+        if (map.getSource(sourceId)) map.removeSource(sourceId);
+      } catch (e) {}
+
+      if (apiKey) {
+        const tileUrl = `https://api.tiles.openaip.net/api/data/${def.endpoint}/{z}/{x}/{y}.png?apiKey=${apiKey}`;
+        try {
+          map.addSource(sourceId, {
+            type: 'raster',
+            tiles: [tileUrl],
+            tileSize: 256,
+            maxzoom: 14
+          });
+          const opacity = (BasemapState.opacity[key] || 70) / 100;
+          const isVisible = BasemapState.visible[key];
+
+          const firstOverlay = Layers.getFirstLayerId();
+          map.addLayer({
+            id: layerId,
+            type: 'raster',
+            source: sourceId,
+            layout: { visibility: isVisible ? 'visible' : 'none' },
+            paint: { 'raster-opacity': opacity }
+          }, firstOverlay || undefined);
+        } catch (e) {
+          console.error(`[Map] Failed to add ${key} layer:`, e);
+        }
       }
     }
 
-    // Update UI
-    document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(`style-${styleKey}`)?.classList.add('active');
+    showToast('Couches aéronautiques mises à jour', 'success');
+  }
+
+  function updateStatusBar() {
+    const active = BasemapState.order.filter(k => BasemapState.visible[k]);
     const el = document.getElementById('status-tiles');
-    if (el) el.textContent = `Tuiles: ${MapStyles[styleKey].label}`;
+    if (el) {
+      if (active.length === 0) {
+        el.textContent = 'Tuiles: aucune';
+      } else {
+        el.textContent = `Tuiles: ${active.map(k => MapStyles[k]?.name || k).join(' + ')}`;
+      }
+    }
   }
 
   function getMap() { return map; }
-  function getCurrentStyle() { return currentStyle; }
 
-  return { init, setStyle, getMap, getCurrentStyle };
+  return { init, toggleBasemap, setBasemapOpacity, reorderBasemaps, setOpenAIPKey, getMap, updateStatusBar };
 })();
