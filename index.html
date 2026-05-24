@@ -140,14 +140,13 @@
           </div>
         </div>
 
-        <!-- OpenAIP Config -->
+        <!-- OpenAIP Config (Haute/Basse altitude) -->
         <div class="section">
           <div class="section-header"><span class="section-title">✈️ Données aéronautiques — OpenAIP</span></div>
           <div class="drone-config">
             <p style="font-size:11px;color:var(--text-muted);margin-bottom:6px">
               <strong>✈️ Haute Altitude</strong> = navaids, VOR, NDB, balises<br>
-              <strong>🛬 Basse Altitude</strong> = aéroports, aérodromes, héliports<br>
-              <strong>🛩️ Zones Drone</strong> = espaces aériens & restrictions
+              <strong>🛬 Basse Altitude</strong> = aéroports, aérodromes, héliports
             </p>
             <p style="font-size:11px;color:var(--text-muted);margin-bottom:8px">
               Clé API gratuite sur <a href="https://www.openaip.net" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">openaip.net</a>
@@ -157,22 +156,23 @@
               <button class="btn btn-primary btn-sm" onclick="saveOpenAIPKey()">OK</button>
             </div>
           </div>
-          <!-- Airspace Legend -->
+        </div>
+
+        <!-- Zones Drone — Géoportail officiel -->
+        <div class="section">
+          <div class="section-header"><span class="section-title">🛩️ Zones Drone — Géoportail France</span></div>
           <div class="airspace-legend" id="airspace-legend">
-            <p class="form-label" style="margin-top:10px;margin-bottom:6px">Légende espaces aériens</p>
-            <div class="legend-item"><span class="legend-color" style="background:rgba(174,30,34,0.5);border:2px solid #ae1e22"></span><span>Classe A — Interdit (FL600+)</span></div>
-            <div class="legend-item"><span class="legend-color" style="background:rgba(52,101,164,0.5);border:2px solid #3465a4"></span><span>Classe B — Contrôlé (≤ FL180)</span></div>
-            <div class="legend-item"><span class="legend-color" style="background:rgba(52,101,164,0.4);border:2px solid #3465a4;border-style:dashed"></span><span>Classe C — Contrôlé (≤ FL180)</span></div>
-            <div class="legend-item"><span class="legend-color" style="background:rgba(52,101,164,0.3);border:2px solid #3465a4;border-style:dotted"></span><span>Classe D — Contrôlé (≤ 2500ft)</span></div>
-            <div class="legend-item"><span class="legend-color" style="background:rgba(117,80,123,0.4);border:2px solid #754b7b"></span><span>Classe E — Semi-contrôlé</span></div>
-            <div class="legend-item"><span class="legend-color" style="background:rgba(78,154,6,0.3);border:2px solid #4e9a06"></span><span>Classe G — Non contrôlé (120m max drone)</span></div>
-            <div class="legend-item"><span class="legend-color" style="background:rgba(204,0,0,0.4);border:2px solid #cc0000"></span><span>Zone P — Interdite (prohibited)</span></div>
-            <div class="legend-item"><span class="legend-color" style="background:rgba(245,121,0,0.4);border:2px solid #f57900"></span><span>Zone R — Restreinte (restricted)</span></div>
-            <div class="legend-item"><span class="legend-color" style="background:rgba(237,212,0,0.4);border:2px solid #edd400"></span><span>Zone D — Dangereuse (danger)</span></div>
-            <div class="legend-item"><span class="legend-color" style="background:rgba(52,152,219,0.3);border:2px solid #3498db"></span><span>CTR — Zone de contrôle aéroport</span></div>
-            <div class="legend-item"><span class="legend-color" style="background:rgba(192,57,43,0.3);border:2px solid #c0392b"></span><span>TMA — Région terminale</span></div>
-            <p style="font-size:10px;color:var(--text-muted);margin-top:6px;line-height:1.4">
-              ⚠️ Données indicatives — consultez toujours votre autorité aéronautique locale avant de voler. En classe G, limite drone généralement 120m AGL.
+            <p style="font-size:11px;color:var(--text-muted);margin-bottom:6px">
+              Source officielle : IGN / DGAC — Carte identique à <a href="https://www.geoportail.gouv.fr" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">geoportail.gouv.fr</a>
+            </p>
+            <p class="form-label" style="margin-top:6px;margin-bottom:6px">Légende — Hauteur max autorisée</p>
+            <div class="legend-item"><span class="legend-color" style="background:rgba(204,0,0,0.6);border:2px solid #cc0000"></span><span>🔴 Vol interdit — 0 m</span></div>
+            <div class="legend-item"><span class="legend-color" style="background:rgba(230,100,30,0.5);border:2px solid #e6641e"></span><span>🟠 Très restreint — max 50 m</span></div>
+            <div class="legend-item"><span class="legend-color" style="background:rgba(237,200,0,0.5);border:2px solid #edc800"></span><span>🟡 Restreint — max 100 m</span></div>
+            <div class="legend-item"><span class="legend-color" style="background:rgba(180,210,60,0.4);border:2px solid #b4d23c"></span><span>🟢 Limité — max 120 m (par défaut)</span></div>
+            <div class="legend-item"><span class="legend-color" style="background:rgba(255,255,255,0.1);border:2px solid rgba(255,255,255,0.3)"></span><span>⬜ Sans restriction — max 120 m</span></div>
+            <p style="font-size:10px;color:var(--text-muted);margin-top:8px;line-height:1.4">
+              ⚠️ Données officielles France uniquement. Vérifiez les NOTAM et restrictions temporaires avant chaque vol. Réglementation catégorie Ouverte (UAS &lt; 25 kg).
             </p>
           </div>
         </div>

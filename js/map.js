@@ -100,7 +100,7 @@ const MapEngine = (() => {
     localStorage.setItem(OPENAIP_STORAGE_KEY, apiKey);
 
     // Update both OpenAIP layers
-    const openAIPLayers = ['highalt', 'lowalt', 'drone'];
+    const openAIPLayers = ['highalt', 'lowalt'];
     for (const key of openAIPLayers) {
       const def = MapStyles[key];
       if (!def || !def.isOpenAIP) continue;

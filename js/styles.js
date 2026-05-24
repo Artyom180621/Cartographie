@@ -80,12 +80,13 @@ const MapStyles = {
   drone: {
     name: 'Zones Drone',
     icon: '🛩️',
-    tiles: [], // Dynamic — set from API key
+    tiles: [
+      'https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=TRANSPORTS.DRONES.RESTRICTIONS&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}'
+    ],
     tileSize: 256,
-    maxzoom: 14,
-    label: 'Espaces aériens',
-    isOpenAIP: true,
-    endpoint: 'airspaces' // Airspaces only — relevant for drone restrictions
+    maxzoom: 12,
+    label: 'Restrictions Drone (Géoportail)',
+    isOpenAIP: false // Source: Géoportail IGN/DGAC — gratuit, sans clé API
   }
 };
 
