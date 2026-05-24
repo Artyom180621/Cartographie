@@ -57,15 +57,25 @@ const MapStyles = {
     maxzoom: 18,
     label: 'Plan IGN'
   },
-  aero: {
-    name: 'Cartes Aéro',
+  highalt: {
+    name: 'Haute Altitude',
     icon: '✈️',
     tiles: [], // Dynamic — set from API key
     tileSize: 256,
     maxzoom: 14,
-    label: 'OpenAIP Complet',
+    label: 'Navaids & Airways',
     isOpenAIP: true,
-    endpoint: 'openaip' // Combined: airspaces + airports + navaids + reporting points
+    endpoint: 'navaids' // VOR, NDB, waypoints — navigation haute altitude
+  },
+  lowalt: {
+    name: 'Basse Altitude',
+    icon: '🛬',
+    tiles: [], // Dynamic — set from API key
+    tileSize: 256,
+    maxzoom: 14,
+    label: 'Aéroports & Héliports',
+    isOpenAIP: true,
+    endpoint: 'airports' // Aéroports, aérodromes, héliports — repères basse altitude
   },
   drone: {
     name: 'Zones Drone',
@@ -81,15 +91,15 @@ const MapStyles = {
 
 /* State : order + visibility + opacity for each basemap layer */
 const BasemapState = (() => {
-  const DEFAULT_ORDER = ['streets', 'satellite', 'topo', 'ign', 'aero', 'drone'];
+  const DEFAULT_ORDER = ['streets', 'satellite', 'topo', 'ign', 'highalt', 'lowalt', 'drone'];
 
   function loadState() {
     try {
       const saved = localStorage.getItem('basemap-state');
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Migration: remove old 'drone' only entry if 'aero' is missing
-        if (parsed.order && !parsed.order.includes('aero')) {
+        // Migration: force reset if old keys present
+        if (parsed.order && (parsed.order.includes('aero') || !parsed.order.includes('highalt'))) {
           return null; // Force reset to get new defaults
         }
         return parsed;
@@ -112,8 +122,8 @@ const BasemapState = (() => {
 
   const state = {
     order: saved?.order || [...DEFAULT_ORDER],
-    visible: saved?.visible || { streets: true, satellite: false, topo: false, ign: false, aero: false, drone: false },
-    opacity: saved?.opacity || { streets: 100, satellite: 100, topo: 100, ign: 100, aero: 70, drone: 70 }
+    visible: saved?.visible || { streets: true, satellite: false, topo: false, ign: false, highalt: false, lowalt: false, drone: false },
+    opacity: saved?.opacity || { streets: 100, satellite: 100, topo: 100, ign: 100, highalt: 70, lowalt: 70, drone: 70 }
   };
 
   // Ensure all keys exist (in case new basemaps were added)
